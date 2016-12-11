@@ -87,3 +87,10 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Custom
+*.swp
+*.jpg
+*.png
+*.pdf
+image/*
