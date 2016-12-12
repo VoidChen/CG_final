@@ -41,7 +41,6 @@ def k_means(bins, means, k, maxiter=1000, black=True):
         if done:
             break
 
-    print(cluster_size)
     return means[:k]
 
 def simple_bins(bins, size=16):
@@ -104,7 +103,6 @@ def select(image, k=5, random_init=False, black=True):
         init = random.sample(list(bins), k)
     else:
         init = init_means(bins, k)
-    print('init:', init)
 
     #k-means
     means = k_means(bins, init, k, black=black)
@@ -117,14 +115,6 @@ def draw_palette(colors, size=100):
     for color in colors:
         images.append(Image.new('LAB', (size, size), color))
 
-    width = sum([image.width for image in images])
-    height = max([image.height for image in images])
-
-    merge = Image.new('LAB', (width, height))
-    offset = 0
-    for image in images:
-        merge.paste(image, (offset, 0))
-        offset += image.width
-
+    merge = h_merge(images)
     image = lab2rgb(merge)
-    image.show()
+    return image

@@ -1,3 +1,4 @@
+import itertools
 from PIL import Image
 from palette import *
 from util import *
@@ -8,18 +9,11 @@ if __name__ == '__main__':
 
     lab = rgb2lab(image)
 
-    colors = select(lab, random_init=True, black=True)
-    print('colors', colors)
-    draw_palette(colors)
+    tests = []
+    for random_init, black in itertools.product([True, False], repeat=2):
+        print('random_init: {}, black: {}'.format(random_init, black))
+        colors = select(lab, random_init=random_init, black=black)
+        print('colors', colors)
+        tests.append(draw_palette(colors))
 
-    colors = select(lab, random_init=True, black=False)
-    print('colors', colors)
-    draw_palette(colors)
-
-    colors = select(lab, random_init=False, black=True)
-    print('colors', colors)
-    draw_palette(colors)
-
-    colors = select(lab, random_init=False, black=False)
-    print('colors', colors)
-    draw_palette(colors)
+    v_merge(tests).show()
