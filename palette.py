@@ -43,6 +43,25 @@ def kmeans(bins, means, k, maxiter=1000, black=True):
     print(cluster_size)
     return means[:k]
 
+def simple_bins(bins, size=16):
+    level = 256//size
+    temp = {}
+    for x in itertools.product(range(size), repeat=3):
+        temp[x] = {'size': 0, 'sum': [0, 0, 0]}
+
+    for color, count in bins.items():
+        index = tuple([c//level for c in color])
+        for i in range(3):
+            temp[index]['sum'][i] += color[i] * count
+        temp[index]['size'] += count
+
+    result = {}
+    for color in temp.values():
+        if color['size'] != 0:
+            result[tuple([color['sum'][j] / color['size'] for j in range(3)])] = color['size']
+
+    return result
+
 def select(image, k=5, black=True):
     colors = image.getcolors(image.width * image.height)
     print('colors num:', len(colors))
@@ -50,6 +69,7 @@ def select(image, k=5, black=True):
     bins = {}
     for count, pixel in colors:
         bins[pixel] = count
+    bins = simple_bins(bins)
 
     init = random.sample(list(bins), k)
     print('init:', init)
