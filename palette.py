@@ -1,20 +1,25 @@
 import random
+import itertools
 from PIL import Image, ImageCms
 from main import *
 
 def distance(color_a, color_b):
     return (sum([(a-b)**2 for a, b in zip(color_a, color_b)]))**0.5
 
-def kmeans(bins, means, k, maxiter=1000):
+def kmeans(bins, means, k, maxiter=1000, black=True):
     #init
     record = {}
     for color in bins.keys():
         record[color] = -1
 
+    if black:
+        means.append((0, 128, 128))
+
     for _ in range(maxiter):
         done = True
-        cluster_sum = [[0, 0, 0] for _ in range(k)]
-        cluster_size = [0 for _ in range(k)]
+        cluster_sum = [[0, 0, 0] for _ in range(len(means))]
+        cluster_size = [0 for _ in range(len(means))]
+
         #assign
         for color, count in bins.items():
             dists = [distance(color, mean) for mean in means]
@@ -35,9 +40,10 @@ def kmeans(bins, means, k, maxiter=1000):
         if done:
             break
 
-    return means
+    print(cluster_size)
+    return means[:k]
 
-def select(image, k=5):
+def select(image, k=5, black=True):
     colors = image.getcolors(image.width * image.height)
     print('colors num:', len(colors))
 
@@ -48,7 +54,7 @@ def select(image, k=5):
     init = random.sample(list(bins), k)
     print('init:', init)
 
-    means = kmeans(bins, init, k)
+    means = kmeans(bins, init, k, black=black)
     means.sort(reverse=True)
     colors = [tuple([int(x) for x in color]) for color in means]
     return colors
@@ -73,7 +79,9 @@ def draw_palette(colors, size=100):
 if __name__ == '__main__':
     image = Image.open('input.jpg')
     lab = rgb2lab(image)
-    colors = select(lab)
+    colors = select(lab, black=True)
     print('colors', colors)
-
+    draw_palette(colors)
+    colors = select(lab, black=False)
+    print('colors', colors)
     draw_palette(colors)
