@@ -87,7 +87,7 @@ def init_means(bins, k):
 
     return result
 
-def select(image, k=5, random_init=False, black=True):
+def build_palette(image, k=5, random_init=False, black=True):
     #get colors
     colors = image.getcolors(image.width * image.height)
     print('colors num:', len(colors))
@@ -118,3 +118,13 @@ def draw_palette(colors, size=100):
     merge = h_merge(images)
     image = lab2rgb(merge)
     return image
+
+def palette_test(image):
+    tests = []
+    for random_init, black in itertools.product([True, False], repeat=2):
+        print('random_init: {}, black: {}'.format(random_init, black))
+        colors = build_palette(image, random_init=random_init, black=black)
+        print('colors', colors)
+        tests.append(draw_palette(colors))
+
+    return v_merge(tests)
