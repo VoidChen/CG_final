@@ -36,7 +36,8 @@ def k_means(bins, means, k, maxiter=1000, black=True):
 
         #update
         for i in range(k):
-            means[i] = tuple([cluster_sum[i][j] / cluster_size[i] for j in range(3)])
+            if cluster_size[i] > 0:
+                means[i] = tuple([cluster_sum[i][j] / cluster_size[i] for j in range(3)])
 
         if done:
             break
