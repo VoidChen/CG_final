@@ -64,7 +64,7 @@ def simple_bins(bins, size=16):
 
 def init_means(bins, k):
     def attenuation(color, target):
-        return 1 - math.exp(((distance(color, target)/0.8)**2) * -1)
+        return 1 - math.exp(((distance(color, target)/80)**2) * -1)
 
     #init
     colors = []
