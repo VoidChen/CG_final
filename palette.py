@@ -1,12 +1,12 @@
 import random
 import itertools
-from PIL import Image, ImageCms
-from main import *
+from PIL import Image
+from util import *
 
 def distance(color_a, color_b):
     return (sum([(a-b)**2 for a, b in zip(color_a, color_b)]))**0.5
 
-def kmeans(bins, means, k, maxiter=1000, black=True):
+def k_means(bins, means, k, maxiter=1000, black=True):
     #init
     record = {}
     for color in bins.keys():
@@ -74,7 +74,7 @@ def select(image, k=5, black=True):
     init = random.sample(list(bins), k)
     print('init:', init)
 
-    means = kmeans(bins, init, k, black=black)
+    means = k_means(bins, init, k, black=black)
     means.sort(reverse=True)
     colors = [tuple([int(x) for x in color]) for color in means]
     return colors
@@ -95,13 +95,3 @@ def draw_palette(colors, size=100):
 
     image = lab2rgb(merge)
     image.show()
-
-if __name__ == '__main__':
-    image = Image.open('input.jpg')
-    lab = rgb2lab(image)
-    colors = select(lab, black=True)
-    print('colors', colors)
-    draw_palette(colors)
-    colors = select(lab, black=False)
-    print('colors', colors)
-    draw_palette(colors)
