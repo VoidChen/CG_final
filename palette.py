@@ -1,5 +1,6 @@
 import random
 import itertools
+import math
 from PIL import Image
 from util import *
 
@@ -62,18 +63,50 @@ def simple_bins(bins, size=16):
 
     return result
 
-def select(image, k=5, black=True):
+def init_means(bins, k):
+    def attenuation(color, target):
+        return 1 - math.exp(((distance(color, target)/0.8)**2) * -1)
+
+    #init
+    colors = []
+    for color, count in bins.items():
+        colors.append([count, color])
+    colors.sort(reverse=True)
+
+    #select
+    result = []
+    for _ in range(k):
+        for color in colors:
+            if color[1] not in result:
+                result.append(color[1])
+                break
+
+        for i in range(len(colors)):
+            colors[i][0] *= attenuation(colors[i][1], result[-1])
+
+        colors.sort(reverse=True)
+
+    return result
+
+def select(image, k=5, random_init=False, black=True):
+    #get colors
     colors = image.getcolors(image.width * image.height)
     print('colors num:', len(colors))
 
+    #build bins
     bins = {}
     for count, pixel in colors:
         bins[pixel] = count
     bins = simple_bins(bins)
 
-    init = random.sample(list(bins), k)
+    #init means
+    if random_init:
+        init = random.sample(list(bins), k)
+    else:
+        init = init_means(bins, k)
     print('init:', init)
 
+    #k-means
     means = k_means(bins, init, k, black=black)
     means.sort(reverse=True)
     colors = [tuple([int(x) for x in color]) for color in means]
