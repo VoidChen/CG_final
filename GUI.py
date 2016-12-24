@@ -22,7 +22,7 @@ def limit_scale(image, width, height):
     else:
         return image
 
-def load_image(label_image, label_palette):
+def load_image(label_image, labels_palette):
     #get image
     image_name = QFileDialog.getOpenFileName()[0]
     image = Image.open(image_name)
@@ -37,8 +37,8 @@ def load_image(label_image, label_palette):
     label_image.setPixmap(QPixmap.fromImage(label_image.bind_image))
 
     #set palette label
-    label_palette.bind_image = ImageQt.ImageQt(draw_palette(palette))
-    label_palette.setPixmap(QPixmap.fromImage(label_palette.bind_image))
+    for i in range(len(palette)):
+        labels_palette[i].pixmap().fill(QColor(*LABtoRGB(RegularLAB(palette[i]))))
 
 def save_image():
     pass
@@ -50,6 +50,7 @@ if __name__ == '__main__':
     #init
     width = 900
     height = 600
+    palette_num = 5
     app = QApplication(sys.argv)
 
     #main widget
@@ -63,13 +64,16 @@ if __name__ == '__main__':
     label_image.setAlignment(Qt.AlignCenter)
     label_image.resize(width, height)
 
-    label_palette = CustomLabel()
-    label_palette.setAlignment(Qt.AlignCenter)
-    label_palette.resize(width, 100)
+    labels_palette = []
+    for _ in range(palette_num):
+        labels_palette.append(CustomLabel())
+        labels_palette[-1].setAlignment(Qt.AlignCenter)
+        labels_palette[-1].setPixmap(QPixmap(100, 100))
+        labels_palette[-1].pixmap().fill(QColor(0, 0, 0, 0))
 
     #button
     btn_load = QPushButton('Load image')
-    btn_load.clicked.connect(lambda: load_image(label_image, label_palette))
+    btn_load.clicked.connect(lambda: load_image(label_image, labels_palette))
     btn_load.show()
 
     btn_save = QPushButton('Save image')
@@ -81,14 +85,19 @@ if __name__ == '__main__':
     btn_reset.show()
 
     #layout
+    layout_palette = QHBoxLayout()
+
     layout_btn = QHBoxLayout()
     layout_btn.addWidget(btn_load)
     layout_btn.addWidget(btn_save)
     layout_btn.addWidget(btn_reset)
 
+    for label in labels_palette:
+        layout_palette.addWidget(label)
+
     layout = QVBoxLayout()
     layout.addWidget(label_image)
-    layout.addWidget(label_palette)
+    layout.addLayout(layout_palette)
     layout.addLayout(layout_btn)
 
     widget.setLayout(layout)
