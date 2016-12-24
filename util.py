@@ -33,10 +33,40 @@ def XYZtoRGB(XYZ):
     return (R, G, B)
 
 def LABtoRGB(LAB):
-    return XYZtosRGB(LABtoXYZ(LAB))
+    return XYZtoRGB(LABtoXYZ(LAB))
+
+def RGBtoXYZ(RGB):
+    def f(n):
+        return n/12.92 if n <= 0.04045 else ((n+0.055)/1.055)**2.4
+
+    R, G, B = [f(x/255) for x in RGB]
+    X = (0.4124*R + 0.3576*G + 0.1805*B) * 100
+    Y = (0.2126*R + 0.7152*G + 0.0722*B) * 100
+    Z = (0.0193*R + 0.1192*G + 0.9505*B) * 100
+    return (X, Y, Z)
+
+def XYZtoLAB(XYZ):
+    def f(n):
+        return n**(1/3) if n > (6/29)**3 else (n / (3*((6/29)**2))) + (4/29)
+
+    X, Y, Z = XYZ
+    X /= 95.047
+    Y /= 100.000
+    Z /= 108.883
+
+    L = 116*f(Y) - 16
+    a = 500 * (f(X) - f(Y))
+    b = 200 * (f(Y) - f(Z))
+    return (L, a, b)
+
+def RGBtoLAB(RGB):
+    return XYZtoLAB(RGBtoXYZ(RGB))
 
 def ValidRGB(RGB):
     return False not in [0 <= x <= 255 for x in RGB]
+
+def RegularLAB(LAB):
+    return (LAB[0] / 255 * 100, LAB[1] - 128, LAB[2] - 128)
 
 def compare(image_a, image_b):
     print('compare', list(image_a.getdata()) == list(image_b.getdata()))
