@@ -111,14 +111,16 @@ def build_palette(image, k=5, random_init=False, black=True):
     colors = [tuple([int(x) for x in color]) for color in means]
     return colors
 
+def draw_color(color, size=100):
+    color = tuple([int(x) for x in color])
+    image = Image.new('LAB', (size, size), color)
+    return lab2rgb(image)
+
 def draw_palette(colors, size=100):
     images = []
     for color in colors:
-        images.append(Image.new('LAB', (size, size), color))
-
-    merge = h_merge(images)
-    image = lab2rgb(merge)
-    return image
+        images.append(draw_color(color, size))
+    return h_merge(images)
 
 def palette_test(image):
     tests = []
