@@ -11,6 +11,10 @@ class CustomLabel(QLabel):
         super(CustomLabel, self).__init__(parent, flags)
         self.bind_image = None
 
+    def setImage(self, image):
+        self.bind_image = ImageQt.ImageQt(image)
+        self.setPixmap(QPixmap.fromImage(self.bind_image))
+
 def limit_scale(image, width, height):
     if image.width > width or image.height > height:
         if image.width/image.height > width/height:
@@ -33,12 +37,12 @@ def load_image(label_image, labels_palette):
     palette = build_palette(lab)
 
     #set image label
-    label_image.bind_image = ImageQt.ImageQt(limit_scale(image, width, height))
-    label_image.setPixmap(QPixmap.fromImage(label_image.bind_image))
+    label_image.setImage(limit_scale(image, width, height))
 
     #set palette label
     for i in range(len(palette)):
-        labels_palette[i].pixmap().fill(QColor(*LABtoRGB(RegularLAB(palette[i]))))
+        print('LAB:', palette[i], 'LAB_fix:', RegularLAB(palette[i]), 'RGB:', LABtoRGB(RegularLAB(palette[i])))
+        labels_palette[i].setImage(draw_palette([palette[i]]))
 
 def save_image():
     pass
