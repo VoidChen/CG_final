@@ -68,6 +68,9 @@ def ValidRGB(RGB):
 def RegularLAB(LAB):
     return (LAB[0] / 255 * 100, LAB[1] - 128, LAB[2] - 128)
 
+def ByteLAB(LAB):
+    return (LAB[0] / 100 * 255, LAB[1] + 128, LAB[2] + 128)
+
 def compare(image_a, image_b):
     print('compare', list(image_a.getdata()) == list(image_b.getdata()))
 
