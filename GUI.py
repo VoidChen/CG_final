@@ -6,14 +6,24 @@ from PyQt5.QtCore import *
 from palette import *
 from util import *
 
-class CustomLabel(QLabel):
+class ImageLabel(QLabel):
     def __init__(self, parent=None, flags=Qt.WindowFlags()):
-        super(CustomLabel, self).__init__(parent, flags)
+        super(ImageLabel, self).__init__(parent, flags)
         self.bind_image = None
 
     def setImage(self, image):
         self.bind_image = ImageQt.ImageQt(image)
         self.setPixmap(QPixmap.fromImage(self.bind_image))
+
+class PaletteLabel(ImageLabel):
+    def __init__(self, parent=None, flags=Qt.WindowFlags()):
+        super(PaletteLabel, self).__init__(parent, flags)
+
+    def mousePressEvent(self, event):
+        color = QColorDialog.getColor()
+        RGB = color.red(), color.green(), color.blue()
+        print(RGB, RGBtoLAB(RGB), ByteLAB(RGBtoLAB(RGB)))
+        self.setImage(draw_color(ByteLAB(RGBtoLAB(RGB))))
 
 def limit_scale(image, width, height):
     if image.width > width or image.height > height:
@@ -42,7 +52,7 @@ def load_image(label_image, labels_palette):
     #set palette label
     for i in range(len(palette)):
         print('LAB:', palette[i], 'LAB_fix:', RegularLAB(palette[i]), 'RGB:', LABtoRGB(RegularLAB(palette[i])))
-        labels_palette[i].setImage(draw_palette([palette[i]]))
+        labels_palette[i].setImage(draw_color(palette[i]))
 
 def save_image():
     pass
@@ -64,13 +74,13 @@ if __name__ == '__main__':
     widget.show()
 
     #label
-    label_image = CustomLabel()
+    label_image = ImageLabel()
     label_image.setAlignment(Qt.AlignCenter)
     label_image.resize(width, height)
 
     labels_palette = []
     for _ in range(palette_num):
-        labels_palette.append(CustomLabel())
+        labels_palette.append(PaletteLabel())
         labels_palette[-1].setAlignment(Qt.AlignCenter)
         labels_palette[-1].setPixmap(QPixmap(100, 100))
         labels_palette[-1].pixmap().fill(QColor(0, 0, 0, 0))
