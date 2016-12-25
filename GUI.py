@@ -18,12 +18,23 @@ class ImageLabel(QLabel):
 class PaletteLabel(ImageLabel):
     def __init__(self, parent=None, flags=Qt.WindowFlags()):
         super(PaletteLabel, self).__init__(parent, flags)
+        self.palette_index = -1
+        self.bind_color = None
+
+    def setColor(self, color):
+        self.bind_color = color
+        self.setImage(draw_color(color))
 
     def mousePressEvent(self, event):
+        #get color
         color = QColorDialog.getColor()
-        RGB = color.red(), color.green(), color.blue()
-        print(RGB, RGBtoLAB(RGB), ByteLAB(RGBtoLAB(RGB)))
-        self.setImage(draw_color(ByteLAB(RGBtoLAB(RGB))))
+        if color.isValid():
+            RGB = color.red(), color.green(), color.blue()
+            LAB = ByteLAB(RGBtoLAB(RGB))
+            print('Set palette color', self.palette_index, RGB, LAB)
+
+            #set palette
+            self.setColor(LAB)
 
 def limit_scale(image, width, height):
     if image.width > width or image.height > height:
@@ -79,9 +90,10 @@ if __name__ == '__main__':
     label_image.resize(width, height)
 
     labels_palette = []
-    for _ in range(palette_num):
+    for i in range(palette_num):
         labels_palette.append(PaletteLabel())
         labels_palette[-1].setAlignment(Qt.AlignCenter)
+        labels_palette[-1].palette_index = i
         labels_palette[-1].setPixmap(QPixmap(100, 100))
         labels_palette[-1].pixmap().fill(QColor(0, 0, 0, 0))
 
