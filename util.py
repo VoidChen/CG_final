@@ -71,6 +71,9 @@ def RegularLAB(LAB):
 def ByteLAB(LAB):
     return (LAB[0] / 100 * 255, LAB[1] + 128, LAB[2] + 128)
 
+def distance(color_a, color_b):
+    return (sum([(a-b)**2 for a, b in zip(color_a, color_b)]))**0.5
+
 def compare(image_a, image_b):
     print('compare', list(image_a.getdata()) == list(image_b.getdata()))
 

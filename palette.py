@@ -4,9 +4,6 @@ import math
 from PIL import Image
 from util import *
 
-def distance(color_a, color_b):
-    return (sum([(a-b)**2 for a, b in zip(color_a, color_b)]))**0.5
-
 def k_means(bins, means, k, maxiter=1000, black=True):
     #init
     record = {}
