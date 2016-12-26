@@ -14,9 +14,9 @@ def LABtoXYZ(LAB):
     def f(n):
         return n**3 if n > 6/29 else 3 * ((6/29)**2) * (n - 4/29)
 
-    L, a, b = LAB
-    assert(0 <= L <= 100 and -128 <= a <= 127 and -128 <= b <= 127)
+    assert(ValidLAB(LAB))
 
+    L, a, b = LAB
     X = 95.047 * f((L+16)/116 + a/500)
     Y = 100.000 * f((L+16)/116)
     Z = 108.883 * f((L+16)/116  - b/200)
@@ -38,6 +38,8 @@ def LABtoRGB(LAB):
 def RGBtoXYZ(RGB):
     def f(n):
         return n/12.92 if n <= 0.04045 else ((n+0.055)/1.055)**2.4
+
+    assert(ValidRGB(RGB))
 
     R, G, B = [f(x/255) for x in RGB]
     X = (0.4124*R + 0.3576*G + 0.1805*B) * 100
@@ -64,6 +66,10 @@ def RGBtoLAB(RGB):
 
 def ValidRGB(RGB):
     return False not in [0 <= x <= 255 for x in RGB]
+
+def ValidLAB(LAB):
+    L, a, b = LAB
+    return 0 <= L <= 100 and -128 <= a <= 127 and -128 <= b <= 127
 
 def RegularLAB(LAB):
     return (LAB[0] / 255 * 100, LAB[1] - 128, LAB[2] - 128)
