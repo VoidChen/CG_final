@@ -12,19 +12,18 @@ def modify_luminance(original, index, new_l):
 
     return result
 
-def luminance_transfer(l, original_p, modified_p):
+def luminance_transfer(color, original_p, modified_p):
     def interpolation(xa, xb, ya, yb, z):
         return (ya*(xb-z) + yb*(z-xa)) / (xb - xa)
 
-    assert(0 <= l <= 255)
-
-    original_p = [0] + original_p + [255]
-    modified_p = [0] + modified_p + [255]
-    for i in range(len(original_p)):
-        if original_p[i] == l:
-            return modified_p[i]
-        elif original_p[i] < l < original_p[i+1]:
-            return interpolation(original_p[i], original_p[i+1], modified_p[i], modified_p[i+1], l)
+    l = color[0]
+    original_l = [0] + [l for l, a, b in original_p] + [255]
+    modified_l = [0] + [l for l, a, b in modified_p] + [255]
+    for i in range(len(original_l)):
+        if original_l[i] == l:
+            return modified_l[i]
+        elif original_l[i] < l < original_l[i+1]:
+            return interpolation(original_l[i], original_l[i+1], modified_l[i], modified_l[i+1], l)
 
 class Vec3:
     def __init__(self, data):
@@ -72,6 +71,51 @@ def single_color_transfer(color, original_c, modified_c):
 
     #transfer
     if (boundary - color).len() < (c_boundary - original_c).len():
-        return (color + (boundary - color) * (offset.len() / (c_boundary - original_c).len())).data
+        return color + (boundary - color) * (offset.len() / (c_boundary - original_c).len())
     else:
-        return (color + offset).data
+        return color + offset
+
+def multiple_color_transfer(color, original_p, modified_p):
+    def weight(color, original_c):
+        #TBD
+        if distance(color, original_c) != 0:
+            return min(1, 1 / distance(color, original_c))
+        else:
+            return 1
+
+    #single color transfer
+    color_st = []
+    for i in range(len(original_p)):
+        color_st.append(single_color_transfer(color, original_p[i], modified_p[i]))
+
+    #get weights
+    weights = []
+    for i in range(len(original_p)):
+        weights.append(weight(color, original_p[i]))
+
+    #calc result
+    color_mt = Vec3([0, 0, 0])
+    for i in range(len(original_p)):
+        color_mt = color_mt + color_st[i] * (weights[i] / sum(weights))
+
+    return color_mt.data[-2:]
+
+def image_transfer(image, original_p, modified_p):
+    #build color map
+    print('build color map')
+    color_map = {}
+    colors = image.getcolors(image.width * image.height)
+    for _, color in colors:
+        l = luminance_transfer(color, original_p, modified_p)
+        ab = multiple_color_transfer(color, original_p, modified_p)
+        color_map[color] = tuple([int(x) for x in [l, *ab]])
+
+    #transfer image
+    print('transfer image')
+    result = Image.new('LAB', image.size)
+    result_pixels = result.load()
+    for i in range(image.width):
+        for j in range(image.height):
+            result_pixels[i, j] = color_map[image.getpixel((i, j))]
+
+    return result
