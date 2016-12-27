@@ -55,7 +55,7 @@ def load_image(label_image, labels_palette):
 
     #get palette
     lab = rgb2lab(image)
-    palette = build_palette(lab)
+    palette = build_palette(lab, len(labels_palette))
 
     #set image label
     label_image.setImage(limit_scale(image, width, height))
