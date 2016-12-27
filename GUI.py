@@ -87,7 +87,6 @@ if __name__ == '__main__':
     #label
     label_image = ImageLabel()
     label_image.setAlignment(Qt.AlignCenter)
-    label_image.resize(width, height)
 
     labels_palette = []
     for i in range(palette_num):
@@ -111,18 +110,20 @@ if __name__ == '__main__':
     btn_reset.show()
 
     #layout
+    layout_image = QHBoxLayout()
+    layout_image.addWidget(label_image)
+
     layout_palette = QHBoxLayout()
+    for label in labels_palette:
+        layout_palette.addWidget(label)
 
     layout_btn = QHBoxLayout()
     layout_btn.addWidget(btn_load)
     layout_btn.addWidget(btn_save)
     layout_btn.addWidget(btn_reset)
 
-    for label in labels_palette:
-        layout_palette.addWidget(label)
-
     layout = QVBoxLayout()
-    layout.addWidget(label_image)
+    layout.addLayout(layout_image)
     layout.addLayout(layout_palette)
     layout.addLayout(layout_btn)
 
