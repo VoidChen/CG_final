@@ -10,6 +10,22 @@ def lab2rgb(image):
     LAB_p = ImageCms.createProfile('LAB')
     return ImageCms.profileToProfile(image, LAB_p, RGB_p, outputMode='RGB')
 
+def rgb2lab_slow(image):
+    result = Image.new('LAB', image.size)
+    result_pixels = result.load()
+    for i in range(image.width):
+        for j in range(image.height):
+            result_pixels[i, j] = ByteLAB(RGBtoLAB(image.getpixel((i, j))[:3]))
+    return result
+
+def lab2rgb_slow(image):
+    result = Image.new('RGB', image.size)
+    result_pixels = result.load()
+    for i in range(image.width):
+        for j in range(image.height):
+            result_pixels[i, j] = RegularRGB(LABtoRGB(RegularLAB(image.getpixel((i, j)))))
+    return result
+
 def LABtoXYZ(LAB):
     def f(n):
         return n**3 if n > 6/29 else 3 * ((6/29)**2) * (n - 4/29)
@@ -75,7 +91,10 @@ def RegularLAB(LAB):
     return (LAB[0] / 255 * 100, LAB[1] - 128, LAB[2] - 128)
 
 def ByteLAB(LAB):
-    return (LAB[0] / 100 * 255, LAB[1] + 128, LAB[2] + 128)
+    return (int(LAB[0] / 100 * 255), int(LAB[1] + 128), int(LAB[2] + 128))
+
+def RegularRGB(RGB):
+    return tuple([int(max(0, min(x, 255))) for x in RGB])
 
 def distance(color_a, color_b):
     return (sum([(a-b)**2 for a, b in zip(color_a, color_b)]))**0.5
