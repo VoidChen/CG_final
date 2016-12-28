@@ -1,4 +1,5 @@
 import copy
+import itertools
 from util import *
 
 def modify_luminance(original, index, new_l):
@@ -99,6 +100,16 @@ def multiple_color_transfer(color, original_p, modified_p):
         color_mt = color_mt + color_st[i] * (weights[i] / sum(weights))
 
     return color_mt.data[-2:]
+
+def sample_color(size=16):
+    assert(size >= 2)
+
+    values = [i * (255/(size-1)) for i in range(size)]
+    colors = []
+    for r, g, b in itertools.product(values, repeat=3):
+        colors.append((r, g, b))
+
+    return colors
 
 def image_transfer(image, original_p, modified_p):
     #build color map
