@@ -1,5 +1,7 @@
+import math
 import copy
 import itertools
+import numpy.linalg
 from util import *
 
 def modify_luminance(original, index, new_l):
@@ -76,28 +78,55 @@ def single_color_transfer(color, original_c, modified_c):
     else:
         return color + offset
 
-def multiple_color_transfer(color, original_p, modified_p):
-    def weight(color, original_c):
-        #TBD
-        if distance(color, original_c) != 0:
-            return min(1, 1 / distance(color, original_c))
-        else:
-            return 1
+def calc_weights(color, original_p):
+    def mean_distance(original_p):
+        dists = []
+        for a, b in itertools.combinations(original_p, 2):
+            dists.append(distance(a, b))
+        return sum(dists) / len(dists)
 
+    def gaussian(r, md):
+        return math.exp(((r/md)**2) * -0.5)
+
+    #init
+    md = mean_distance(original_p)
+
+    #get phi and lambda
+    matrix = []
+    for i in range(len(original_p)):
+        temp = []
+        for j in range(len(original_p)):
+            temp.append(gaussian(distance(original_p[j], original_p[i]), md))
+        matrix.append(temp)
+    phi = numpy.array(matrix)
+    lamb = numpy.linalg.inv(phi)
+
+    #calc weights
+    weights = [0 for _ in range(len(original_p))]
+    for i in range(len(original_p)):
+        for j in range(len(original_p)):
+            weights[i] += lamb[i][j] * gaussian(distance(color, original_p[j]), md)
+
+    #normalize weights
+    weights = [w if w >=0 else 0 for w in weights]
+    w_sum = sum(weights)
+    weights = [w/w_sum for w in weights]
+
+    return weights
+
+def multiple_color_transfer(color, original_p, modified_p):
     #single color transfer
     color_st = []
     for i in range(len(original_p)):
         color_st.append(single_color_transfer(color, original_p[i], modified_p[i]))
 
     #get weights
-    weights = []
-    for i in range(len(original_p)):
-        weights.append(weight(color, original_p[i]))
+    weights = calc_weights(color, original_p)
 
     #calc result
     color_mt = Vec3([0, 0, 0])
     for i in range(len(original_p)):
-        color_mt = color_mt + color_st[i] * (weights[i] / sum(weights))
+        color_mt = color_mt + color_st[i] * weights[i]
 
     return color_mt.data[-2:]
 
