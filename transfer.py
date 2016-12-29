@@ -141,41 +141,7 @@ def RGB_sample_color(size=16):
 
     return colors
 
-def trilinear_interpolation(corners, target):
-    def interpolation(xa, xb, ya, yb, xm):
-        if xa == xb:
-            return ya
-        else:
-            return (ya*(xb-xm) + yb*(xm-xa)) / (xb - xa)
-
-    #calc rates
-    if corners[4][0][0] == corners[0][0][0]:
-        Rd = 0
-    else:
-        Rd = (target[0] - corners[0][0][0]) / (corners[4][0][0] - corners[0][0][0])
-    if corners[2][0][1] == corners[0][0][1]:
-        Gd = 0
-    else:
-        Gd = (target[1] - corners[0][0][1]) / (corners[2][0][1] - corners[0][0][1])
-    if corners[1][0][2] == corners[0][0][2]:
-        Bd = 0
-    else:
-        Bd = (target[2] - corners[0][0][2]) / (corners[1][0][2] - corners[0][0][2])
-    RGBd = [(1 - Rd, Rd), (1- Gd, Gd), (1 - Bd, Bd)]
-
-    rates = []
-    for Rr, Gr, Br in itertools.product(*RGBd):
-        rates.append(Rr * Gr * Br)
-
-    #calc result
-    result = Vec3([0, 0, 0])
-    for i in range(8):
-        result = result + corners[i][1] * rates[i]
-
-    return result.data
-
-def nearest_color(target, sample_color_map):
-    level_size = round(len(sample_color_map)**(1/3))
+def nearest_color(target, level_size):
     levels = [i * (255/(level_size-1)) for i in range(level_size)]
     nearest_level = []
     for ch in target:
@@ -187,11 +153,28 @@ def nearest_color(target, sample_color_map):
                 nearest_level.append((levels[i], levels[i+1]))
                 break
 
-    nearest_colors = []
-    for color in itertools.product(*nearest_level):
-        nearest_colors.append((color, Vec3(sample_color_map[color])))
+    return nearest_level
 
-    return nearest_colors
+def trilinear_interpolation(target, sample_color_map):
+    #calc rates
+    corners = nearest_color(target, round(len(sample_color_map)**(1/3)))
+    RGBr = []
+    for i in range(3):
+        temp = (target[i] - corners[i][0]) / (corners[i][1] - corners[i][0]) if corners[i][0] != corners[i][1] else 0
+        RGBr.append((1 - temp, temp))
+
+    rates = []
+    for Rr, Gr, Br in itertools.product(*RGBr):
+        rates.append(Rr * Gr * Br)
+
+    #calc result
+    result = [0, 0, 0]
+    for color, rate in zip(itertools.product(*corners), rates):
+        sc = sample_color_map[color]
+        for i in range(3):
+            result[i] += sc[i] * rate
+
+    return result
 
 def image_transfer(image, original_p, modified_p):
     #build sample color map
@@ -211,8 +194,7 @@ def image_transfer(image, original_p, modified_p):
     color_map = {}
     colors = image.getcolors(image.width * image.height)
     for _, color in colors:
-        nc = nearest_color(color, sample_color_map)
-        color_map[color] = tuple([int(x) for x in trilinear_interpolation(nc, color)])
+        color_map[color] = tuple([int(x) for x in trilinear_interpolation(color, sample_color_map)])
     print('Build color map time', time.time() - t)
 
     #transfer image
