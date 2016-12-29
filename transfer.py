@@ -176,12 +176,12 @@ def trilinear_interpolation(target, sample_color_map):
 
     return result
 
-def image_transfer(image, original_p, modified_p):
+def image_transfer(image, original_p, modified_p, sample_level=16):
     #build sample color map
     print('Build sample color map')
     t = time.time()
     sample_color_map = {}
-    sample_colors = RGB_sample_color(6)
+    sample_colors = RGB_sample_color(sample_level)
     for color in sample_colors:
         l = luminance_transfer(color, original_p, modified_p)
         ab = multiple_color_transfer(color, original_p, modified_p)
