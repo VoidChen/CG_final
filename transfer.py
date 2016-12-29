@@ -1,6 +1,7 @@
 import math
 import copy
 import itertools
+import time
 import numpy.linalg
 from util import *
 
@@ -130,32 +131,89 @@ def multiple_color_transfer(color, original_p, modified_p):
 
     return color_mt.data[-2:]
 
-def sample_color(size=16):
+def RGB_sample_color(size=16):
     assert(size >= 2)
 
-    values = [i * (255/(size-1)) for i in range(size)]
+    levels = [i * (255/(size-1)) for i in range(size)]
     colors = []
-    for r, g, b in itertools.product(values, repeat=3):
+    for r, g, b in itertools.product(levels, repeat=3):
         colors.append((r, g, b))
 
     return colors
 
+def trilinear_interpolation(corners, target):
+    def interpolation(xa, xb, ya, yb, xm):
+        if xa == xb:
+            return ya
+        else:
+            return (ya*(xb-xm) + yb*(xm-xa)) / (xb - xa)
+
+    #R interpolation
+    R_inter = []
+    for i in range(4):
+        new_x = (target[0], *corners[i][0][1:])
+        new_y = interpolation(corners[i][0][0], corners[i+4][0][0], corners[i][1], corners[i+4][1], target[0])
+        R_inter.append((new_x, new_y))
+
+    #G interpolation
+    RG_inter = []
+    for i in range(2):
+        new_x = (R_inter[i][0][0], target[1], R_inter[i][0][2])
+        new_y = interpolation(R_inter[i][0][1], R_inter[i+2][0][1], R_inter[i][1], R_inter[i+2][1], target[1])
+        RG_inter.append((new_x, new_y))
+
+    #B interpolation
+    return interpolation(RG_inter[0][0][2], RG_inter[1][0][2], RG_inter[0][1], RG_inter[1][1], target[2]).data
+
+def nearest_color(target, sample_color_map):
+    level_size = round(len(sample_color_map)**(1/3))
+    levels = [i * (255/(level_size-1)) for i in range(level_size)]
+    nearest_level = []
+    for ch in target:
+        for i in range(len(levels)):
+            if levels[i] == ch:
+                nearest_level.append((levels[i], levels[i]))
+                break
+            elif levels[i] < ch < levels[i+1]:
+                nearest_level.append((levels[i], levels[i+1]))
+                break
+
+    nearest_colors = []
+    for color in itertools.product(*nearest_level):
+        nearest_colors.append((color, Vec3(sample_color_map[color])))
+
+    return nearest_colors
+
 def image_transfer(image, original_p, modified_p):
+    #build sample color map
+    print('Build sample color map')
+    t = time.time()
+    sample_color_map = {}
+    sample_colors = RGB_sample_color(6)
+    for color in sample_colors:
+        l = luminance_transfer(color, original_p, modified_p)
+        ab = multiple_color_transfer(color, original_p, modified_p)
+        sample_color_map[color] = tuple([int(x) for x in [l, *ab]])
+    print('Build sample color map time', time.time() - t)
+
     #build color map
-    print('build color map')
+    print('Build color map')
+    t = time.time()
     color_map = {}
     colors = image.getcolors(image.width * image.height)
     for _, color in colors:
-        l = luminance_transfer(color, original_p, modified_p)
-        ab = multiple_color_transfer(color, original_p, modified_p)
-        color_map[color] = tuple([int(x) for x in [l, *ab]])
+        nc = nearest_color(color, sample_color_map)
+        color_map[color] = tuple([int(x) for x in trilinear_interpolation(nc, color)])
+    print('Build color map time', time.time() - t)
 
     #transfer image
-    print('transfer image')
+    print('Transfer image')
+    t = time.time()
     result = Image.new('LAB', image.size)
     result_pixels = result.load()
     for i in range(image.width):
         for j in range(image.height):
             result_pixels[i, j] = color_map[image.getpixel((i, j))]
+    print('Transfer image time', time.time() - t)
 
     return result
