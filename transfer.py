@@ -148,22 +148,31 @@ def trilinear_interpolation(corners, target):
         else:
             return (ya*(xb-xm) + yb*(xm-xa)) / (xb - xa)
 
-    #R interpolation
-    R_inter = []
-    for i in range(4):
-        new_x = (target[0], *corners[i][0][1:])
-        new_y = interpolation(corners[i][0][0], corners[i+4][0][0], corners[i][1], corners[i+4][1], target[0])
-        R_inter.append((new_x, new_y))
+    #calc rates
+    if corners[4][0][0] == corners[0][0][0]:
+        Rd = 0
+    else:
+        Rd = (target[0] - corners[0][0][0]) / (corners[4][0][0] - corners[0][0][0])
+    if corners[2][0][1] == corners[0][0][1]:
+        Gd = 0
+    else:
+        Gd = (target[1] - corners[0][0][1]) / (corners[2][0][1] - corners[0][0][1])
+    if corners[1][0][2] == corners[0][0][2]:
+        Bd = 0
+    else:
+        Bd = (target[2] - corners[0][0][2]) / (corners[1][0][2] - corners[0][0][2])
+    RGBd = [(1 - Rd, Rd), (1- Gd, Gd), (1 - Bd, Bd)]
 
-    #G interpolation
-    RG_inter = []
-    for i in range(2):
-        new_x = (R_inter[i][0][0], target[1], R_inter[i][0][2])
-        new_y = interpolation(R_inter[i][0][1], R_inter[i+2][0][1], R_inter[i][1], R_inter[i+2][1], target[1])
-        RG_inter.append((new_x, new_y))
+    rates = []
+    for Rr, Gr, Br in itertools.product(*RGBd):
+        rates.append(Rr * Gr * Br)
 
-    #B interpolation
-    return interpolation(RG_inter[0][0][2], RG_inter[1][0][2], RG_inter[0][1], RG_inter[1][1], target[2]).data
+    #calc result
+    result = Vec3([0, 0, 0])
+    for i in range(8):
+        result = result + corners[i][1] * rates[i]
+
+    return result.data
 
 def nearest_color(target, sample_color_map):
     level_size = round(len(sample_color_map)**(1/3))
