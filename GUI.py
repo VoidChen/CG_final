@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from palette import *
 from util import *
+from transfer import *
 
 class ImageLabel(QLabel):
     def __init__(self, parent=None, flags=Qt.WindowFlags()):
@@ -24,8 +25,12 @@ class PaletteLabel(ImageLabel):
     def setColor(self, color):
         self.bind_color = color
         self.setImage(draw_color(color))
+        self.repaint()
 
     def mousePressEvent(self, event):
+        #init
+        global image_rgb_m, image_lab_m, palette_m
+
         #get color
         color = QColorDialog.getColor()
         if color.isValid():
@@ -33,32 +38,68 @@ class PaletteLabel(ImageLabel):
             LAB = ByteLAB(RGBtoLAB(RGB))
             print('Set palette color', self.palette_index, RGB, LAB)
 
-            #set palette
-            self.setColor(LAB)
+            #modify palette_m
+            #palette_m = modify_luminance(palette_m, self.palette_index, LAB[0])
+            palette_m[self.palette_index] = LAB
+
+            #modify palette labels
+            for i in range(len(palette_m)):
+                labels_palette[i].setColor(palette_m[i])
+
+            #transfer image
+            image_lab_m = image_transfer(image_lab, palette, palette_m, 10)
+            image_rgb_m = lab2rgb(image_lab_m)
+            label_image.setImage(limit_scale(image_rgb_m, width, height))
 
 def load_image(label_image, labels_palette):
+    #init
+    global image_rgb, image_rgb_m, image_lab, image_lab_m, palette, palette_m
+
     #get image
     image_name = QFileDialog.getOpenFileName()[0]
-    image = Image.open(image_name)
-    print(image_name, image.format, image.size, image.mode)
+    if image_name == '':
+        return
+
+    image_rgb = Image.open(image_name)
+    print(image_name, image_rgb.format, image_rgb.size, image_rgb.mode)
 
     #get palette
-    lab = rgb2lab(image)
-    palette = build_palette(lab, len(labels_palette))
+    image_lab = rgb2lab(image_rgb)
+    palette = build_palette(image_lab, len(labels_palette))
+    for color in palette:
+        print('LAB:', color, 'LAB_fix:', RegularLAB(color), 'RGB:', LABtoRGB(RegularLAB(color)))
 
     #set image label
-    label_image.setImage(limit_scale(image, width, height))
+    label_image.setImage(limit_scale(image_rgb, width, height))
 
     #set palette label
     for i in range(len(palette)):
-        print('LAB:', palette[i], 'LAB_fix:', RegularLAB(palette[i]), 'RGB:', LABtoRGB(RegularLAB(palette[i])))
-        labels_palette[i].setImage(draw_color(palette[i]))
+        labels_palette[i].setColor(palette[i])
+
+    #copy object
+    image_rgb_m = copy.deepcopy(image_rgb)
+    image_lab_m = copy.deepcopy(image_lab)
+    palette_m = copy.deepcopy(palette)
 
 def save_image():
-    pass
+    #get image
+    save_name = QFileDialog.getSaveFileName()[0]
+    if save_name != '':
+        image_rgb_m.save(save_name)
 
 def reset():
-    pass
+    #init
+    global image_rgb_m, image_lab_m, palette_m
+
+    #reset object
+    image_rgb_m = copy.deepcopy(image_rgb)
+    image_lab_m = copy.deepcopy(image_lab)
+    palette_m = copy.deepcopy(palette)
+
+    #reset GUI
+    label_image.setImage(limit_scale(image_rgb, width, height))
+    for i in range(len(palette)):
+        labels_palette[i].setColor(palette[i])
 
 if __name__ == '__main__':
     #init
