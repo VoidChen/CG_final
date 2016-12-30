@@ -34,7 +34,7 @@ def luminance_transfer(color, original_p, modified_p):
 
 class Vec3:
     def __init__(self, data):
-        self.data = copy.deepcopy(data)
+        self.data = data
 
     def __add__(self, other):
         return Vec3([x + y for x, y in zip(self.data, other.data)])
