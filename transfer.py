@@ -23,11 +23,14 @@ def luminance_transfer(color, original_p, modified_p):
     l = color[0]
     original_l = [0] + [l for l, a, b in original_p] + [255]
     modified_l = [0] + [l for l, a, b in modified_p] + [255]
-    for i in range(len(original_l)):
-        if original_l[i] == l:
-            return modified_l[i]
-        elif original_l[i] < l < original_l[i+1]:
-            return interpolation(original_l[i], original_l[i+1], modified_l[i], modified_l[i+1], l)
+    if l >= 255:
+        return 255
+    else:
+        for i in range(len(original_l)):
+            if original_l[i] == l:
+                return modified_l[i]
+            elif original_l[i] < l < original_l[i+1]:
+                return interpolation(original_l[i], original_l[i+1], modified_l[i], modified_l[i+1], l)
 
 class Vec3:
     def __init__(self, data):
@@ -49,7 +52,7 @@ class Vec3:
         return (sum([x**2 for x in self.data]))**0.5
 
 def single_color_transfer(color, original_c, modified_c):
-    def get_boundary(origin, direction, k_min, k_max, iters=100):
+    def get_boundary(origin, direction, k_min, k_max, iters=20):
         start = origin + direction * k_min
         end = origin + direction * k_max
         for _ in range(iters):
