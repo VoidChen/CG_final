@@ -5,16 +5,16 @@ import time
 import numpy.linalg
 from util import *
 
-def modify_luminance(original, index, new_l):
-    result = copy.deepcopy(original)
+def modify_luminance(original_p, index, new_l):
+    modified_p = copy.deepcopy(original_p)
 
-    result[index] = new_l
-    for i in range(index+1, len(original)):
-        result[i] = max(result[i], result[i-1])
+    modified_p[index] = (new_l, *modified_p[index][-2:])
+    for i in range(index+1, len(original_p)):
+        modified_p[i] = (min(modified_p[i][0], modified_p[i-1][0]), *modified_p[i][-2:])
     for i in range(index-1, -1, -1):
-        result[i] = min(result[i], result[i+1])
+        modified_p[i] = (max(modified_p[i][0], modified_p[i+1][0]), *modified_p[i][-2:])
 
-    return result
+    return modified_p
 
 def luminance_transfer(color, original_p, modified_p):
     def interpolation(xa, xb, ya, yb, z):
