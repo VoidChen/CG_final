@@ -141,23 +141,16 @@ def RGB_sample_color(size=16):
 
     return colors
 
-def nearest_color(target, level_size):
-    levels = [i * (255/(level_size-1)) for i in range(level_size)]
+def nearest_color(target, level, levels):
     nearest_level = []
     for ch in target:
-        for i in range(len(levels)):
-            if levels[i] == ch:
-                nearest_level.append((levels[i], levels[i]))
-                break
-            elif levels[i] < ch < levels[i+1]:
-                nearest_level.append((levels[i], levels[i+1]))
-                break
+        index = ch / level
+        nearest_level.append((levels[math.floor(index)], levels[math.ceil(index)]))
 
     return nearest_level
 
-def trilinear_interpolation(target, sample_color_map):
+def trilinear_interpolation(target, corners, sample_color_map):
     #calc rates
-    corners = nearest_color(target, round(len(sample_color_map)**(1/3)))
     RGBr = []
     for i in range(3):
         temp = (target[i] - corners[i][0]) / (corners[i][1] - corners[i][0]) if corners[i][0] != corners[i][1] else 0
@@ -177,6 +170,10 @@ def trilinear_interpolation(target, sample_color_map):
     return result
 
 def image_transfer(image, original_p, modified_p, sample_level=16):
+    #init
+    level = 255 / (sample_level - 1)
+    levels = [i * (255/(sample_level-1)) for i in range(sample_level)]
+
     #build sample color map
     print('Build sample color map')
     t = time.time()
@@ -194,7 +191,8 @@ def image_transfer(image, original_p, modified_p, sample_level=16):
     color_map = {}
     colors = image.getcolors(image.width * image.height)
     for _, color in colors:
-        color_map[color] = tuple([int(x) for x in trilinear_interpolation(color, sample_color_map)])
+        nc = nearest_color(color, level, levels)
+        color_map[color] = tuple([int(x) for x in trilinear_interpolation(color, nc, sample_color_map)])
     print('Build color map time', time.time() - t)
 
     #transfer image
