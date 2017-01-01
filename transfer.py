@@ -22,15 +22,17 @@ def luminance_transfer(color, original_p, modified_p):
         return (ya*(xb-z) + yb*(z-xa)) / (xb - xa)
 
     l = color[0]
-    original_l = [0] + [l for l, a, b in original_p] + [255]
-    modified_l = [0] + [l for l, a, b in modified_p] + [255]
-    if l >= 255:
+    original_l = [255] + [l for l, a, b in original_p] + [0]
+    modified_l = [255] + [l for l, a, b in modified_p] + [0]
+    if l > 255:
         return 255
+    elif l <= 0:
+        return 0
     else:
         for i in range(len(original_l)):
             if original_l[i] == l:
                 return modified_l[i]
-            elif original_l[i] < l < original_l[i+1]:
+            elif original_l[i] > l > original_l[i+1]:
                 return interpolation(original_l[i], original_l[i+1], modified_l[i], modified_l[i+1], l)
 
 class Vec3:
