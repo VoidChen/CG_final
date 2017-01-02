@@ -32,7 +32,7 @@ class PaletteLabel(ImageLabel):
         global image_rgb_m, image_lab_m, palette_m
 
         #get color
-        color = QColorDialog.getColor()
+        color = QColorDialog.getColor(options=QColorDialog.DontUseNativeDialog)
         if color.isValid():
             RGB = color.red(), color.green(), color.blue()
             LAB = ByteLAB(RGBtoLAB(RGB))
