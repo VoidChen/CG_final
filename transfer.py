@@ -228,9 +228,10 @@ def image_transfer(image, original_p, modified_p, sample_level=16):
     t = time.time()
     result = Image.new('LAB', image.size)
     result_pixels = result.load()
+    image_pixels = image.load()
     for i in range(image.width):
         for j in range(image.height):
-            result_pixels[i, j] = color_map[image.getpixel((i, j))]
+            result_pixels[i, j] = color_map[image_pixels[i, j]]
     print('Transfer image time', time.time() - t)
 
     return result
