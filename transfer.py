@@ -4,7 +4,7 @@ import itertools
 import time
 import numpy.linalg
 from util import *
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 
 def modify_luminance(original_p, index, new_l):
     modified_p = copy.deepcopy(original_p)
@@ -175,8 +175,14 @@ def trilinear_interpolation(target, corners, sample_color_map):
 
     return result
 
-def multiple_color_transfer_mt(data):
-    return multiple_color_transfer(*data)
+def luminance_transfer_mt(args):
+    return luminance_transfer(*args)
+
+def multiple_color_transfer_mt(args):
+    return multiple_color_transfer(*args)
+
+def trilinear_interpolation_mt(args):
+    return trilinear_interpolation(*args)
 
 def image_transfer(image, original_p, modified_p, sample_level=16):
     #init
@@ -186,16 +192,18 @@ def image_transfer(image, original_p, modified_p, sample_level=16):
     #build sample color map
     print('Build sample color map')
     t = time.time()
-    with Pool(5) as pool:
-        sample_color_map = {}
-        sample_colors = RGB_sample_color(sample_level)
-        args = []
-        for color in sample_colors:
-            args.append((color, original_p, modified_p))
-        ab_results = pool.map(multiple_color_transfer_mt, args)
-        for i in range(len(sample_colors)):
-            l = luminance_transfer(sample_colors[i], original_p, modified_p)
-            sample_color_map[sample_colors[i]] = tuple([int(x) for x in [l, *ab_results[i]]])
+    sample_color_map = {}
+    sample_colors = RGB_sample_color(sample_level)
+
+    args = []
+    for color in sample_colors:
+        args.append((color, original_p, modified_p))
+    with Pool(cpu_count()-1) as pool:
+        l = pool.map(luminance_transfer_mt, args)
+        ab = pool.map(multiple_color_transfer_mt, args)
+
+    for i in range(len(sample_colors)):
+        sample_color_map[sample_colors[i]] = tuple([int(x) for x in (l[i], *ab[i])])
     print('Build sample color map time', time.time() - t)
 
     #build color map
@@ -203,9 +211,16 @@ def image_transfer(image, original_p, modified_p, sample_level=16):
     t = time.time()
     color_map = {}
     colors = image.getcolors(image.width * image.height)
+
+    args = []
     for _, color in colors:
         nc = nearest_color(color, level, levels)
-        color_map[color] = tuple([int(x) for x in trilinear_interpolation(color, nc, sample_color_map)])
+        args.append((color, nc, sample_color_map))
+    with Pool(cpu_count()-1) as pool:
+        inter_result = pool.map(trilinear_interpolation_mt, args)
+
+    for i in range(len(colors)):
+        color_map[colors[i][1]] = tuple([int(x) for x in inter_result[i]])
     print('Build color map time', time.time() - t)
 
     #transfer image
