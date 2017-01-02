@@ -109,9 +109,8 @@ def build_palette(image, k=5, random_init=False, black=True):
     return colors
 
 def draw_color(color, size=100):
-    color = tuple([int(x) for x in color])
-    image = Image.new('LAB', (size, size), color)
-    return lab2rgb(image)
+    color = RegularRGB(LABtoRGB(RegularLAB(color)))
+    return Image.new('RGB', (size, size), color)
 
 def draw_palette(colors, size=100):
     images = []
