@@ -178,37 +178,25 @@ def trilinear_interpolation(target, corners, sample_color_map):
 def multiple_color_transfer_mt(data):
     return multiple_color_transfer(*data)
 
-def image_transfer(image, original_p, modified_p, sample_level=16, mt=True):
+def image_transfer(image, original_p, modified_p, sample_level=16):
     #init
     level = 255 / (sample_level - 1)
     levels = [i * (255/(sample_level-1)) for i in range(sample_level)]
 
     #build sample color map
-    if mt:
-        print('Build sample color map mt')
-        t = time.time()
-        with Pool(5) as pool:
-            sample_color_map = {}
-            sample_colors = RGB_sample_color(sample_level)
-            args = []
-            for color in sample_colors:
-                args.append((color, original_p, modified_p))
-            ab_results = pool.map(multiple_color_transfer_mt, args)
-            for i in range(len(sample_colors)):
-                l = luminance_transfer(sample_colors[i], original_p, modified_p)
-                sample_color_map[sample_colors[i]] = tuple([int(x) for x in [l, *ab_results[i]]])
-        print('Build sample color map time', time.time() - t)
-
-    else:
-        print('Build sample color map')
-        t = time.time()
+    print('Build sample color map')
+    t = time.time()
+    with Pool(5) as pool:
         sample_color_map = {}
         sample_colors = RGB_sample_color(sample_level)
+        args = []
         for color in sample_colors:
-            l = luminance_transfer(color, original_p, modified_p)
-            ab = multiple_color_transfer(color, original_p, modified_p)
-            sample_color_map[color] = tuple([int(x) for x in [l, *ab]])
-        print('Build sample color map time', time.time() - t)
+            args.append((color, original_p, modified_p))
+        ab_results = pool.map(multiple_color_transfer_mt, args)
+        for i in range(len(sample_colors)):
+            l = luminance_transfer(sample_colors[i], original_p, modified_p)
+            sample_color_map[sample_colors[i]] = tuple([int(x) for x in [l, *ab_results[i]]])
+    print('Build sample color map time', time.time() - t)
 
     #build color map
     print('Build color map')
