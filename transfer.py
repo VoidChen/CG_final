@@ -185,13 +185,14 @@ def trilinear_interpolation_mt(args):
     return trilinear_interpolation(*args)
 
 def image_transfer(image, original_p, modified_p, sample_level=16):
+    t = time.time()
     #init
     level = 255 / (sample_level - 1)
     levels = [i * (255/(sample_level-1)) for i in range(sample_level)]
 
     #build sample color map
     print('Build sample color map')
-    t = time.time()
+    t2 = time.time()
     sample_color_map = {}
     sample_colors = RGB_sample_color(sample_level)
 
@@ -204,11 +205,11 @@ def image_transfer(image, original_p, modified_p, sample_level=16):
 
     for i in range(len(sample_colors)):
         sample_color_map[sample_colors[i]] = tuple([int(x) for x in (l[i], *ab[i])])
-    print('Build sample color map time', time.time() - t)
+    print('Build sample color map time', time.time() - t2)
+    t2 = time.time()
 
     #build color map
     print('Build color map')
-    t = time.time()
     color_map = {}
     colors = image.getcolors(image.width * image.height)
 
@@ -221,17 +222,18 @@ def image_transfer(image, original_p, modified_p, sample_level=16):
 
     for i in range(len(colors)):
         color_map[colors[i][1]] = tuple([int(x) for x in inter_result[i]])
-    print('Build color map time', time.time() - t)
+    print('Build color map time', time.time() - t2)
+    t2 = time.time()
 
     #transfer image
     print('Transfer image')
-    t = time.time()
     result = Image.new('LAB', image.size)
     result_pixels = result.load()
     image_pixels = image.load()
     for i in range(image.width):
         for j in range(image.height):
             result_pixels[i, j] = color_map[image_pixels[i, j]]
-    print('Transfer image time', time.time() - t)
+    print('Transfer image time', time.time() - t2)
 
+    print('Total time', time.time() - t)
     return result
