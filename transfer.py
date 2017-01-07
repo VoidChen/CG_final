@@ -21,10 +21,10 @@ def luminance_transfer(color, original_p, modified_p):
         return (ya*(xb-z) + yb*(z-xa)) / (xb - xa)
 
     l = color[0]
-    original_l = [255] + [l for l, a, b in original_p] + [0]
-    modified_l = [255] + [l for l, a, b in modified_p] + [0]
-    if l > 255:
-        return 255
+    original_l = [100] + [l for l, a, b in original_p] + [0]
+    modified_l = [100] + [l for l, a, b in modified_p] + [0]
+    if l > 100:
+        return 100
     elif l <= 0:
         return 0
     else:
