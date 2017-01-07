@@ -1,4 +1,5 @@
 import sys
+import copy
 from PIL import Image, ImageQt
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
