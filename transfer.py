@@ -1,5 +1,4 @@
 import math
-import copy
 import itertools
 import time
 import numpy.linalg
@@ -7,7 +6,7 @@ from util import *
 from multiprocessing import Pool, cpu_count
 
 def modify_luminance(original_p, index, new_l):
-    modified_p = copy.deepcopy(original_p)
+    modified_p = original_p[:]
 
     modified_p[index] = (new_l, *modified_p[index][-2:])
     for i in range(index+1, len(original_p)):
