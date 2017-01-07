@@ -208,13 +208,13 @@ def image_transfer(image, original_p, modified_p, sample_level=16, luminance_fla
             lab = pool.map(multiple_color_transfer_mt, args)
 
         for i in range(len(sample_colors)):
-            sample_color_map[sample_colors[i]] = ByteLAB((l[i], *lab[i][-2:]))
+            sample_color_map[sample_colors[i]] = (l[i], *lab[i][-2:])
     else:
         with Pool(cpu_count()-1) as pool:
             lab = pool.map(multiple_color_transfer_mt, args)
 
         for i in range(len(sample_colors)):
-            sample_color_map[sample_colors[i]] = ByteLAB(lab[i])
+            sample_color_map[sample_colors[i]] = lab[i]
 
     print('Build sample color map time', time.time() - t2)
     t2 = time.time()
@@ -232,7 +232,7 @@ def image_transfer(image, original_p, modified_p, sample_level=16, luminance_fla
         inter_result = pool.map(trilinear_interpolation_mt, args)
 
     for i in range(len(colors)):
-        color_map[colors[i][1]] = tuple([int(x) for x in inter_result[i]])
+        color_map[colors[i][1]] = ByteLAB([int(x) for x in inter_result[i]])
     print('Build color map time', time.time() - t2)
     t2 = time.time()
 
