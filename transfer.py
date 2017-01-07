@@ -135,7 +135,7 @@ def multiple_color_transfer(color, original_p, modified_p):
     for i in range(len(original_p)):
         color_mt = color_mt + color_st[i] * weights[i]
 
-    return color_mt.data[-2:]
+    return color_mt.data
 
 def RGB_sample_color(size=16):
     assert(size >= 2)
@@ -184,7 +184,7 @@ def multiple_color_transfer_mt(args):
 def trilinear_interpolation_mt(args):
     return trilinear_interpolation(*args)
 
-def image_transfer(image, original_p, modified_p, sample_level=16):
+def image_transfer(image, original_p, modified_p, sample_level=16, luminance_flag=False):
     t = time.time()
     #init
     level = 255 / (sample_level - 1)
@@ -199,12 +199,21 @@ def image_transfer(image, original_p, modified_p, sample_level=16):
     args = []
     for color in sample_colors:
         args.append((color, original_p, modified_p))
-    with Pool(cpu_count()-1) as pool:
-        l = pool.map(luminance_transfer_mt, args)
-        ab = pool.map(multiple_color_transfer_mt, args)
 
-    for i in range(len(sample_colors)):
-        sample_color_map[sample_colors[i]] = tuple([int(x) for x in (l[i], *ab[i])])
+    if luminance_flag:
+        with Pool(cpu_count()-1) as pool:
+            l = pool.map(luminance_transfer_mt, args)
+            lab = pool.map(multiple_color_transfer_mt, args)
+
+        for i in range(len(sample_colors)):
+            sample_color_map[sample_colors[i]] = tuple([int(x) for x in (l[i], *lab[i][-2:])])
+    else:
+        with Pool(cpu_count()-1) as pool:
+            lab = pool.map(multiple_color_transfer_mt, args)
+
+        for i in range(len(sample_colors)):
+            sample_color_map[sample_colors[i]] = tuple([int(x) for x in lab[i]])
+
     print('Build sample color map time', time.time() - t2)
     t2 = time.time()
 

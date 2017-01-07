@@ -40,7 +40,8 @@ class PaletteLabel(ImageLabel):
             print('Set palette color', self.palette_index, RGB, LAB)
 
             #modify palette_m
-            #palette_m = modify_luminance(palette_m, self.palette_index, LAB[0])
+            if luminance_flag:
+                palette_m = modify_luminance(palette_m, self.palette_index, LAB[0])
             palette_m[self.palette_index] = LAB
 
             #modify palette labels
@@ -48,7 +49,7 @@ class PaletteLabel(ImageLabel):
                 labels_palette[i].setColor(palette_m[i])
 
             #transfer image
-            image_lab_m = image_transfer(image_lab, palette, palette_m, 10)
+            image_lab_m = image_transfer(image_lab, palette, palette_m, sample_level=10, luminance_flag=luminance_flag)
             image_rgb_m = lab2rgb(image_lab_m)
             label_image.setImage(limit_scale(image_rgb_m, width, height))
 
@@ -102,11 +103,16 @@ def reset():
     for i in range(len(palette)):
         labels_palette[i].setColor(palette[i])
 
+def luminance_flag_changed(box):
+    global luminance_flag
+    luminance_flag = box.currentData()
+
 if __name__ == '__main__':
     #init
     width = 900
     height = 600
     palette_num = 5
+    luminance_flag = False
     app = QApplication(sys.argv)
 
     #main widget
@@ -140,6 +146,14 @@ if __name__ == '__main__':
     btn_reset.clicked.connect(lambda: reset())
     btn_reset.show()
 
+    #combobox
+    box_luminance_flag = QComboBox()
+    box_luminance_flag.activated.connect(lambda: luminance_flag_changed(box_luminance_flag))
+    box_luminance_flag.addItem('Luminance transfer: On', QVariant(True))
+    box_luminance_flag.addItem('Luminance transfer: Off', QVariant(False))
+    box_luminance_flag.setCurrentIndex(1)
+    box_luminance_flag.show()
+
     #layout
     layout_image = QHBoxLayout()
     layout_image.addWidget(label_image)
@@ -157,6 +171,7 @@ if __name__ == '__main__':
     layout.addLayout(layout_image)
     layout.addLayout(layout_palette)
     layout.addLayout(layout_btn)
+    layout.addWidget(box_luminance_flag)
 
     widget.setLayout(layout)
 
