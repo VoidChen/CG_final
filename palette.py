@@ -106,24 +106,15 @@ def build_palette(image, k=5, random_init=False, black=True):
     means = k_means(bins, init, k, black=black)
     means.sort(reverse=True)
     colors = [tuple([int(x) for x in color]) for color in means]
+    print('Build palette', colors)
     return colors
 
 def draw_color(color, size=100):
     color = RegularRGB(LABtoRGB(RegularLAB(color)))
     return Image.new('RGB', (size, size), color)
 
-def draw_palette(colors, size=100):
+def draw_palette(palette, size=100):
     images = []
-    for color in colors:
+    for color in palette:
         images.append(draw_color(color, size))
     return h_merge(images)
-
-def palette_test(image):
-    tests = []
-    for random_init, black in itertools.product([True, False], repeat=2):
-        print('random_init: {}, black: {}'.format(random_init, black))
-        colors = build_palette(image, random_init=random_init, black=black)
-        print('colors', colors)
-        tests.append(draw_palette(colors))
-
-    return v_merge(tests)
