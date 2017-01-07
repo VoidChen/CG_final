@@ -59,7 +59,7 @@ def single_color_transfer(color, original_c, modified_c):
         end = origin + direction * k_max
         for _ in range(iters):
             mid = (start + end) / 2
-            if ValidLAB(RegularLAB(mid.data)) and ValidRGB(LABtoRGB(RegularLAB(mid.data))):
+            if ValidLAB(mid.data) and ValidRGB(LABtoRGB(mid.data)):
                 start = mid
             else:
                 end = mid
@@ -73,7 +73,8 @@ def single_color_transfer(color, original_c, modified_c):
 
     #get boundary
     c_boundary = get_boundary(original_c, offset, 1, 255)
-    if ValidLAB(RegularLAB((color + offset).data)) and ValidRGB(LABtoRGB(RegularLAB((color + offset).data))):
+    naive = (color + offset).data
+    if ValidLAB(naive) and ValidRGB(LABtoRGB(naive)):
         boundary = get_boundary(color, offset, 1, 255)
     else:
         boundary = get_boundary(modified_c, color - original_c, 0, 1)
@@ -186,6 +187,8 @@ def trilinear_interpolation_mt(args):
 def image_transfer(image, original_p, modified_p, sample_level=16, luminance_flag=False):
     t = time.time()
     #init
+    original_p = [RegularLAB(c) for c in original_p]
+    modified_p = [RegularLAB(c) for c in modified_p]
     level = 255 / (sample_level - 1)
     levels = [i * (255/(sample_level-1)) for i in range(sample_level)]
 
@@ -197,7 +200,7 @@ def image_transfer(image, original_p, modified_p, sample_level=16, luminance_fla
 
     args = []
     for color in sample_colors:
-        args.append((color, original_p, modified_p))
+        args.append((RegularLAB(color), original_p, modified_p))
 
     if luminance_flag:
         with Pool(cpu_count()-1) as pool:
@@ -205,13 +208,13 @@ def image_transfer(image, original_p, modified_p, sample_level=16, luminance_fla
             lab = pool.map(multiple_color_transfer_mt, args)
 
         for i in range(len(sample_colors)):
-            sample_color_map[sample_colors[i]] = tuple([int(x) for x in (l[i], *lab[i][-2:])])
+            sample_color_map[sample_colors[i]] = ByteLAB((l[i], *lab[i][-2:]))
     else:
         with Pool(cpu_count()-1) as pool:
             lab = pool.map(multiple_color_transfer_mt, args)
 
         for i in range(len(sample_colors)):
-            sample_color_map[sample_colors[i]] = tuple([int(x) for x in lab[i]])
+            sample_color_map[sample_colors[i]] = ByteLAB(lab[i])
 
     print('Build sample color map time', time.time() - t2)
     t2 = time.time()
