@@ -80,10 +80,14 @@ def single_color_transfer(color, original_c, modified_c):
         boundary = get_boundary(modified_c, color - original_c, 0, 1)
 
     #transfer
-    if (boundary - color).len() < (c_boundary - original_c).len():
-        return color + (boundary - color) * (offset.len() / (c_boundary - original_c).len())
+    if (boundary - color).len() == 0:
+        result = color
+    elif (boundary - color).len() < (c_boundary - original_c).len():
+        result = color + (boundary - color) * (offset.len() / (c_boundary - original_c).len())
     else:
-        return color + offset
+        result = color + (boundary - color) * (offset.len() / (boundary - color).len())
+
+    return result
 
 def calc_weights(color, original_p):
     def mean_distance(original_p):
