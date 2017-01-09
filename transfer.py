@@ -204,7 +204,7 @@ def image_transfer(image, original_p, modified_p, sample_level=16, luminance_fla
 
     args = []
     for color in sample_colors:
-        args.append((RegularLAB(color), original_p, modified_p))
+        args.append((RGBtoLAB(color), original_p, modified_p))
 
     if luminance_flag:
         with Pool(cpu_count()-1) as pool:
@@ -226,17 +226,17 @@ def image_transfer(image, original_p, modified_p, sample_level=16, luminance_fla
     #build color map
     print('Build color map')
     color_map = {}
-    colors = image.getcolors(image.width * image.height)
+    colors = [color[:3] for _, color in image.getcolors(image.width * image.height)]
 
     args = []
-    for _, color in colors:
+    for color in colors:
         nc = nearest_color(color, level, levels)
         args.append((color, nc, sample_color_map))
     with Pool(cpu_count()-1) as pool:
         inter_result = pool.map(trilinear_interpolation_mt, args)
 
     for i in range(len(colors)):
-        color_map[colors[i][1]] = tuple([int(x) for x in inter_result[i]])
+        color_map[colors[i]] = tuple([int(x) for x in inter_result[i]])
     print('Build color map time', time.time() - t2)
     t2 = time.time()
 
@@ -247,7 +247,7 @@ def image_transfer(image, original_p, modified_p, sample_level=16, luminance_fla
     image_pixels = image.load()
     for i in range(image.width):
         for j in range(image.height):
-            result_pixels[i, j] = color_map[image_pixels[i, j]]
+            result_pixels[i, j] = color_map[image_pixels[i, j][:3]]
     print('Transfer image time', time.time() - t2)
 
     print('Total time', time.time() - t)

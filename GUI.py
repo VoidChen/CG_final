@@ -50,7 +50,7 @@ class PaletteLabel(ImageLabel):
                 labels_palette[i].setColor(palette_m[i])
 
             #transfer image
-            image_lab_m = image_transfer(image_lab, palette, palette_m, sample_level=10, luminance_flag=luminance_flag)
+            image_lab_m = image_transfer(image_rgb, palette, palette_m, sample_level=10, luminance_flag=luminance_flag)
             image_rgb_m = lab2rgb(image_lab_m)
             label_image.setImage(limit_scale(image_rgb_m, width, height))
 
