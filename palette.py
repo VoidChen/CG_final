@@ -113,8 +113,11 @@ def draw_color(color, size=100):
     color = RegularRGB(LABtoRGB(RegularLAB(color)))
     return Image.new('RGB', (size, size), color)
 
-def draw_palette(palette, size=100):
+def draw_palette(palette, size=100, horizontal=True):
     images = []
     for color in palette:
         images.append(draw_color(color, size))
-    return h_merge(images)
+    if horizontal:
+        return h_merge(images)
+    else:
+        return v_merge(images)

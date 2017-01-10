@@ -57,6 +57,8 @@ class PaletteLabel(ImageLabel):
 
         #transfer image
         if mode_flag:
+            print('Original palette', [RegularRGB(LABtoRGB(RegularLAB(color))) for color in palette])
+            print('Modified palette', [RegularRGB(LABtoRGB(RegularLAB(color))) for color in palette_m])
             image_lab_m = image_transfer(image_lab, palette, palette_m, sample_level=10, luminance_flag=luminance_flag)
             image_rgb_m = lab2rgb(image_lab_m)
             label_image.setImage(limit_scale(image_rgb_m, width, height))
