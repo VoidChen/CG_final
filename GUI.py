@@ -35,28 +35,35 @@ class PaletteLabel(ImageLabel):
         #get color
         current = QColor(*RegularRGB(LABtoRGB(RegularLAB(self.bind_color))))
         color = QColorDialog.getColor(initial=current, options=QColorDialog.DontUseNativeDialog)
-        if color.isValid():
-            RGB = color.red(), color.green(), color.blue()
-            LAB = ByteLAB(RGBtoLAB(RGB))
-            print('Set palette color', self.palette_index, RGB, LAB)
+        if not color.isValid():
+            return
 
-            #modify palette_m
-            if luminance_flag:
-                palette_m = modify_luminance(palette_m, self.palette_index, LAB[0])
-            palette_m[self.palette_index] = LAB
+        RGB = color.red(), color.green(), color.blue()
+        LAB = ByteLAB(RGBtoLAB(RGB))
+        print('Set palette color', self.palette_index, RGB, LAB)
 
-            #modify palette labels
-            for i in range(len(palette_m)):
-                labels_palette[i].setColor(palette_m[i])
+        #modify palette_m
+        if mode_flag and luminance_flag:
+            palette_m = modify_luminance(palette_m, self.palette_index, LAB[0])
+        palette_m[self.palette_index] = LAB
 
-            #transfer image
+        #modify original palette
+        if not mode_flag:
+            palette[self.palette_index] = LAB
+
+        #modify palette labels
+        for i in range(len(palette_m)):
+            labels_palette[i].setColor(palette_m[i])
+
+        #transfer image
+        if mode_flag:
             image_lab_m = image_transfer(image_lab, palette, palette_m, sample_level=10, luminance_flag=luminance_flag)
             image_rgb_m = lab2rgb(image_lab_m)
             label_image.setImage(limit_scale(image_rgb_m, width, height))
 
 def load_image(label_image, labels_palette):
     #init
-    global image_rgb, image_rgb_m, image_lab, image_lab_m, palette, palette_m
+    global image_rgb, image_rgb_m, image_lab, image_lab_m, palette, palette_m, palette_bak
 
     #get image
     image_name = QFileDialog.getOpenFileName()[0]
@@ -83,6 +90,7 @@ def load_image(label_image, labels_palette):
     image_rgb_m = copy.deepcopy(image_rgb)
     image_lab_m = copy.deepcopy(image_lab)
     palette_m = copy.deepcopy(palette)
+    palette_bak = copy.deepcopy(palette)
 
 def save_image():
     #get image
@@ -92,17 +100,22 @@ def save_image():
 
 def reset():
     #init
-    global image_rgb_m, image_lab_m, palette_m
+    global image_rgb_m, image_lab_m, palette_m, palette
 
     #reset object
     image_rgb_m = copy.deepcopy(image_rgb)
     image_lab_m = copy.deepcopy(image_lab)
-    palette_m = copy.deepcopy(palette)
+    palette_m = copy.deepcopy(palette_bak)
+    palette = copy.deepcopy(palette_bak)
 
     #reset GUI
     label_image.setImage(limit_scale(image_rgb, width, height))
     for i in range(len(palette)):
         labels_palette[i].setColor(palette[i])
+
+def mode_flag_changed(box):
+    global mode_flag
+    mode_flag = box.currentData()
 
 def luminance_flag_changed(box):
     global luminance_flag
@@ -113,6 +126,7 @@ if __name__ == '__main__':
     width = 900
     height = 600
     palette_num = 5
+    mode_flag = True
     luminance_flag = False
     app = QApplication(sys.argv)
 
@@ -148,6 +162,13 @@ if __name__ == '__main__':
     btn_reset.show()
 
     #combobox
+    box_mode_flag = QComboBox()
+    box_mode_flag.activated.connect(lambda: mode_flag_changed(box_mode_flag))
+    box_mode_flag.addItem('Normal mode', QVariant(True))
+    box_mode_flag.addItem('Palette edit mode', QVariant(False))
+    box_mode_flag.setCurrentIndex(0)
+    box_mode_flag.show()
+
     box_luminance_flag = QComboBox()
     box_luminance_flag.activated.connect(lambda: luminance_flag_changed(box_luminance_flag))
     box_luminance_flag.addItem('Luminance transfer: On', QVariant(True))
@@ -172,6 +193,7 @@ if __name__ == '__main__':
     layout.addLayout(layout_image)
     layout.addLayout(layout_palette)
     layout.addLayout(layout_btn)
+    layout.addWidget(box_mode_flag)
     layout.addWidget(box_luminance_flag)
 
     widget.setLayout(layout)
