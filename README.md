@@ -1,4 +1,4 @@
-#Computer Graphics 2016 final project
+# Computer Graphics 2016 final project
 
 ## Introduction
 An implementation of [*Palette-based Photo Recoloring*](http://gfx.cs.princeton.edu/pubs/Chang_2015_PPR/index.php).
